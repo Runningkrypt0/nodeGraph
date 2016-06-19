@@ -110,12 +110,62 @@ function Node_Graph(){
 		}
 	}
 
-	this.generateBeta = function(BETA){
+	this.generateBeta = function(beta){
+		//generate a beta-skeleton for the node graph
+		//similar to relative neighbor, but based off angles, not distances
+		//if beta = 1 this produces a gabriel graph
 		
+		var theta;
+		if(beta>1){
+			theta = Math.asin(1/beta);
+		}else{
+			theta = Math.PI - Math.asin(beta);
+		}
+		var valid,a,b,angle;
+		for(var ii=0;ii<this.nodes.length-1;ii++){
+			for(var jj=ii+1;jj<this.nodes.length;jj++){
+				valid = true;
+				for(var kk=0;kk<this.nodes.length;kk++){
+					a = this.nodes[kk].position.clone().sub(this.nodes[ii].position)
+					b = this.nodes[kk].position.clone().sub(this.nodes[jj].position)
+					angle = a.angleTo(b);
+					if(angle>theta){
+						valid = false;
+						break;
+					}
+				}
+				if(valid){
+					this.nodes[ii].connections.push(jj);
+					this.nodes[jj].connections.push(ii);
+				}
+			}
+		}
 	}
 	
 	this.generateRelativeNeighbor = function(){
+		//for every node pair a-b, if no point c is closer to a and b, than b is to a
+		//create a connection
 		
+		//there is a better way to do this, but I do not yet understand it
+		var valid,distance;
+		for(var ii=0;ii<this.nodes.length-1;ii++){
+			for(var jj=ii+1;jj<this.nodes.length;jj++){
+				valid = true;
+				distance = this.nodes[jj].position.distanceTo(this.nodes[ii].position)
+				for(var kk=0;kk<this.nodes.length;kk++){
+					if(this.nodes[kk].position.distanceTo(this.nodes[ii].position)<distance){
+						if(this.nodes[kk].position.distanceTo(this.nodes[jj].position)<distance){
+							valid = false;
+							break;
+						}
+					}
+				}
+				if(valid){
+					this.nodes[ii].connections.push(jj);
+					this.nodes[jj].connections.push(ii);
+				}
+			}
+		}
 	}
 	
 	this.generateNearestNeighbor = function(threshold){
@@ -130,11 +180,7 @@ function Node_Graph(){
 			}
 		}
 	}
-	
-	this.genereateDelaunay = function(){
-		//HAHAHAHAHAHA coming soon
-	}
-	
+
 	this.draw = function(){
 		this.sanatizeConnections();
 		
